@@ -58,7 +58,7 @@ private:
   std::vector<size_t> getSimilarWords(const std::vector<size_t> & wordIndexes) const
   {
     std::vector<size_t> similarWordIndexes;
-    for each (size_t wordIndex in wordIndexes)
+    std::for_each (wordIndexes.begin(), wordIndexes.end(), [&](size_t wordIndex) 
     {
       const std::string & currentWord = _dict[wordIndex];
       //TODO: можно ускорить поиск за счет переноса уже учтенных слов в конец массива
@@ -69,14 +69,14 @@ private:
         if (wordDistance(currentWord, _dict[i]) <= _maxWordDistance)
           similarWordIndexes.push_back(i);
       }
-    }
+    });
     return similarWordIndexes;
   }
 
   void markAsUsed(const std::vector<size_t> & wordIndexes, int waveIndex)
   {
-    for each (size_t i in wordIndexes)
-      _isWordUsed[i] = waveIndex;
+    std::for_each (wordIndexes.begin(), wordIndexes.end(), [&](size_t i) {
+      _isWordUsed[i] = waveIndex;});
   }
 
   bool isResultAchieved(const std::vector<size_t> & wordIndexes) const
@@ -123,7 +123,7 @@ public:
     //не учитываем ребра вес которых больше 1
     //запускаем подобие Дейкстры
     size_t nMaxIter = 10000;
-    _isWordUsed = std::vector<int>(_dict.size(), _invalidIsWordUsed);
+    _isWordUsed = std::vector<int>(_dict.size(), -1);
     std::vector<size_t> waveWords = std::vector<size_t>{ _sourceWordIndex };
 
     for (size_t waveIndex = 0; waveIndex < nMaxIter; ++waveIndex)
@@ -261,7 +261,7 @@ public:
 };
 
 
-void main()
+int main()
 {
   Test().Run();
   WordConverterPtr wc;
@@ -272,19 +272,20 @@ void main()
   catch (const std::exception &e)
   {
     std::cout << "Invalid input data." << e.what() << std::endl;
-    return;
+    return 1;
   }
 
   try
   {
     auto res = wc->DoWork();
-    for each (std::string word in res)
+    std::for_each (res.begin(), res.end(), [&](const std::string & word) 
     {
       std::cout << word << std::endl;
-    }
+    });
   }
   catch (const std::exception &e)
   {
     std::cout << "Result not found." << e.what() << std::endl;
   }
+  return 0;
 }
