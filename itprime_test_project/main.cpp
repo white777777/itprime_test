@@ -244,30 +244,31 @@ public:
 class WordConverterBuilder
 {
 public:
-  static WordConverterPtr Build()
+  static WordConverterPtr Build(int argc, char* argv[])
   {
-    std::string file1Path;
+    if (argc < 3)
+      throw std::invalid_argument("Usage: app ./path_file_with_words ./path_to_dictionary");
+    std::string file1Path = argv[1];
     std::string sourceWord, targetWord;
-    std::cin >> file1Path;
     {
       std::ifstream if1(file1Path);
       if (!std::getline(if1, sourceWord) || !std::getline(if1, targetWord))
         throw std::invalid_argument("Can't read file");
     }
-    std::cin >> file1Path;
+    file1Path = argv[2];
     std::ifstream ifs(file1Path);
     return std::make_unique<WordConverter>(sourceWord, targetWord, ifs);
   }
 };
 
 
-int main()
+int main(int argc, char* argv[])
 {
   Test().Run();
   WordConverterPtr wc;
   try
   {
-    wc = WordConverterBuilder::Build();
+    wc = WordConverterBuilder::Build(argc, argv);
   }
   catch (const std::exception &e)
   {
