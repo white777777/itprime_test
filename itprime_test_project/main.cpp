@@ -8,6 +8,41 @@
 #include <fstream>
 #include <memory>
 
+
+//http://stackoverflow.com/questions/6089231/getting-std-ifstream-to-handle-lf-cr-and-crlf
+std::istream& safeGetline(std::istream& is, std::string& t)
+{
+  t.clear();
+  
+  // The characters in the stream are read one-by-one using a std::streambuf.
+  // That is faster than reading them one-by-one using the std::istream.
+  // Code that uses streambuf this way must be guarded by a sentry object.
+  // The sentry object performs various tasks,
+  // such as thread synchronization and updating the stream state.
+  
+  std::istream::sentry se(is, true);
+  std::streambuf* sb = is.rdbuf();
+  
+  for(;;) {
+    int c = sb->sbumpc();
+    switch (c) {
+      case '\n':
+        return is;
+      case '\r':
+        if(sb->sgetc() == '\n')
+          sb->sbumpc();
+        return is;
+      case EOF:
+        // Also handle the case when the last line has no line ending
+        if(t.empty())
+          is.setstate(std::ios::eofbit);
+        return is;
+      default:
+        t += (char)c;
+    }
+  }
+}
+
 class Test;
 
 class WordConverter
@@ -35,7 +70,7 @@ private:
     while (!dictStream.eof())
     {
       std::string word;
-      std::getline(dictStream, word);
+      safeGetline(dictStream, word);
       if (word.size() != wordLen)
         continue;
       _dict.push_back(word);
@@ -252,7 +287,7 @@ public:
     std::string sourceWord, targetWord;
     {
       std::ifstream if1(file1Path);
-      if (!std::getline(if1, sourceWord) || !std::getline(if1, targetWord))
+      if (!safeGetline(if1, sourceWord) || !safeGetline(if1, targetWord))
         throw std::invalid_argument("Can't read file");
     }
     file1Path = argv[2];
